@@ -128,6 +128,48 @@ func (provider *Provider) TransactionReceipt(ctx context.Context, transactionHas
 	return &receipt, nil
 }
 
+type TransactionReceiptV2 struct {
+	Jsonrpc string `json:"jsonrpc"`
+	Result  struct {
+		ActualFee struct {
+			Amount string `json:"amount"`
+			Unit   string `json:"unit"`
+		} `json:"actual_fee"`
+		BlockHash   string `json:"block_hash"`
+		BlockNumber int    `json:"block_number"`
+		Events      []struct {
+			Data        []string `json:"data"`
+			FromAddress string   `json:"from_address"`
+			Keys        []string `json:"keys"`
+		} `json:"events"`
+		ExecutionResources struct {
+			DataAvailability struct {
+				L1DataGas int `json:"l1_data_gas"`
+				L1Gas     int `json:"l1_gas"`
+			} `json:"data_availability"`
+			EcOpBuiltinApplications       int `json:"ec_op_builtin_applications"`
+			PedersenBuiltinApplications   int `json:"pedersen_builtin_applications"`
+			RangeCheckBuiltinApplications int `json:"range_check_builtin_applications"`
+			Steps                         int `json:"steps"`
+		} `json:"execution_resources"`
+		ExecutionStatus string        `json:"execution_status"`
+		FinalityStatus  string        `json:"finality_status"`
+		MessagesSent    []interface{} `json:"messages_sent"`
+		TransactionHash string        `json:"transaction_hash"`
+		Type            string        `json:"type"`
+	} `json:"result"`
+	Id int `json:"id"`
+}
+
+func (provider *Provider) TransactionReceiptV2(ctx context.Context, transactionHash *felt.Felt) (*TransactionReceiptV2, error) {
+	var receipt TransactionReceiptV2
+	err := do(ctx, provider.c, "starknet_getTransactionReceipt", &receipt, transactionHash)
+	if err != nil {
+		return nil, tryUnwrapToRPCErr(err, ErrHashNotFound)
+	}
+	return &receipt, nil
+}
+
 // GetTransactionStatus gets the transaction status (possibly reflecting that the tx is still in the mempool, or dropped from it)
 // Parameters:
 // - ctx: the context.Context object for cancellation and timeouts.
